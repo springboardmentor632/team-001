@@ -1,36 +1,30 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  Zap,
-  ArrowRight,
-  Lock,
   Mail,
-  Eye,
-  EyeOff,
+  ArrowRight,
+  Zap,
   CheckCircle2,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  KeyRound
 } from "lucide-react";
 
 import bgImage from "../../assets/images/Gemini_Generated_Image_qy1ynzqy1ynzqy1y.png";
 
-const Login = () => {
-  const navigate = useNavigate();
+const API = "http://localhost:5000/api/auth";
 
-  const [showPassword, setShowPassword] = useState(false);
+function ForgotPassword() {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Custom Animated Popup State: { show: boolean, type: 'success' | 'error' | 'warning', message: string }
   const [popup, setPopup] = useState({
     show: false,
     type: "success",
     message: "",
-  });
-
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
   });
 
   const triggerPopup = (type, message) => {
@@ -40,39 +34,32 @@ const Login = () => {
     }, 3500);
   };
 
-  const loginUser = async (e) => {
+  const sendOTP = async (e) => {
     e.preventDefault();
+    if (!email) {
+      triggerPopup("warning", "Please enter your email address.");
+      return;
+    }
 
     try {
       setLoading(true);
+      await axios.post(`${API}/forgot-password`, { email });
 
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        form
-      );
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(res.data.user)
-      );
-
-      triggerPopup("success", "Welcome back! Login Successful.");
+      triggerPopup("success", "OTP sent successfully to your email!");
 
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/verify-reset-otp", {
+          state: { email },
+        });
       }, 1200);
     } catch (err) {
-      const errorMsg =
-        err.response?.data?.message || "Invalid credentials. Please try again.";
-      triggerPopup("error", errorMsg);
+      triggerPopup(
+        "error",
+        err.response?.data?.message || "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
   };
 
   return (
@@ -96,20 +83,15 @@ const Login = () => {
         @keyframes slideInDown {
           from {
             opacity: 0;
-            transform: translate(-50, -30px) scale(0.9);
+            transform: translate(-50%, -30px) scale(0.9);
           }
           to {
             opacity: 1;
-            transform: translate(-50, 0) scale(1);
+            transform: translate(-50%, 0) scale(1);
           }
         }
 
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-
-        .login-card {
+        .forgot-card {
           animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
@@ -119,29 +101,6 @@ const Login = () => {
         .btn:hover {
           transform: translateY(-3px);
           box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.5);
-        }
-
-        .google-btn {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          overflow: hidden;
-        }
-        .google-btn::after {
-          content: '';
-          position: absolute;
-          top: 0; left: -100%;
-          width: 100%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-          transition: 0.5s;
-        }
-        .google-btn:hover::after {
-          left: 100%;
-        }
-        .google-btn:hover {
-          background: rgba(255, 255, 255, 0.12);
-          border-color: rgba(56, 189, 248, 0.4);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
 
         .input-field:focus {
@@ -197,16 +156,18 @@ const Login = () => {
 
       <div style={styles.container}>
         <form
-          className="login-card"
+          className="forgot-card"
           style={styles.card}
-          onSubmit={loginUser}
+          onSubmit={sendOTP}
         >
           <div style={styles.logoBox}>
-            <Zap color="#38bdf8" size={24} />
+            <KeyRound color="#38bdf8" size={24} />
           </div>
 
-          <h1 style={styles.title}>Welcome Back</h1>
-          <p style={styles.subtitle}>Sign in to DecisionHub workspace</p>
+          <h1 style={styles.title}>Reset Password</h1>
+          <p style={styles.subtitle}>
+            Enter your account email to receive a secure password recovery code
+          </p>
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Email Address</label>
@@ -217,120 +178,45 @@ const Login = () => {
                 className="input-field"
                 placeholder="name@company.com"
                 style={styles.input}
-                value={form.email}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    email: e.target.value,
-                  })
-                }
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Password</label>
-            <div style={styles.inputWrapper}>
-              <Lock size={18} style={styles.icon} />
-              <input
-                type={showPassword ? "text" : "password"}
-                className="input-field"
-                placeholder="••••••••"
-                style={styles.input}
-                value={form.password}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    password: e.target.value,
-                  })
-                }
-                required
-              />
-              <button
-                type="button"
-                style={styles.eyeBtn}
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div style={styles.forgotContainer}>
-            <span
-              onClick={() => navigate("/forgot-password")}
-              style={styles.forgot}
-            >
-              Forgot Password?
-            </span>
           </div>
 
           <button
             type="submit"
             className="btn"
-            style={styles.loginBtn}
+            style={styles.button}
             disabled={loading}
           >
             {loading ? (
               <span style={styles.loadingFlex}>
-                <span style={styles.spinner}></span> Signing In...
+                <span style={styles.spinner}></span> Sending OTP...
               </span>
             ) : (
               <>
-                Sign In{" "}
+                Send OTP{" "}
                 <ArrowRight size={18} style={{ marginLeft: "8px" }} />
               </>
             )}
           </button>
 
-          <div style={styles.divider}>
-            <span style={styles.dividerLine}></span>
-            <span style={styles.dividerText}>or continue with</span>
-            <span style={styles.dividerLine}></span>
-          </div>
-
-          {/* Super Enhanced Ultra-Attractive Google Button */}
-          <button
-            type="button"
-            className="google-btn"
-            style={styles.googleBtn}
-            onClick={handleGoogleLogin}
-          >
-            <div style={styles.googleIconBg}>
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path
-                  fill="#EA4335"
-                  d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7s.2-2 .4-2.7L1.6 6.4C.6 8.4 0 10.6 0 13s.6 4.6 1.6 6.6l3.7-2.9z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15C3.5 18.8 7.4 23 12 23z"
-                />
-              </svg>
-            </div>
-            <span style={styles.googleBtnText}>Continue with Google</span>
-          </button>
-
           <p style={styles.footer}>
-            Don't have an account?{" "}
-            <Link to="/register" style={styles.link}>
-              Create Account
-            </Link>
+            Remembered your password?{" "}
+            <span
+              onClick={() => navigate("/login")}
+              style={styles.link}
+            >
+              Sign In
+            </span>
           </p>
         </form>
       </div>
     </div>
   );
-};
+}
 
 const styles = {
   page: {
@@ -439,7 +325,7 @@ const styles = {
   title: {
     textAlign: "center",
     marginTop: "18px",
-    fontSize: "28px",
+    fontSize: "26px",
     fontWeight: "800",
     letterSpacing: "-0.02em",
   },
@@ -447,12 +333,13 @@ const styles = {
   subtitle: {
     textAlign: "center",
     color: "#94a3b8",
-    fontSize: "14px",
+    fontSize: "13px",
     marginBottom: "28px",
+    lineHeight: "1.4",
   },
 
   inputGroup: {
-    marginBottom: "18px",
+    marginBottom: "22px",
   },
 
   label: {
@@ -486,31 +373,7 @@ const styles = {
     transition: "all 0.2s ease",
   },
 
-  eyeBtn: {
-    position: "absolute",
-    right: "14px",
-    background: "none",
-    border: "none",
-    color: "#64748b",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-  },
-
-  forgotContainer: {
-    textAlign: "right",
-    marginBottom: "22px",
-  },
-
-  forgot: {
-    color: "#38bdf8",
-    textDecoration: "none",
-    fontSize: "13px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-
-  loginBtn: {
+  button: {
     width: "100%",
     padding: "14px",
     border: "none",
@@ -541,53 +404,6 @@ const styles = {
     animation: "spin 0.8s linear infinite",
   },
 
-  divider: {
-    display: "flex",
-    alignItems: "center",
-    textAlign: "center",
-    margin: "20px 0",
-  },
-
-  dividerLine: {
-    flex: 1,
-    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-  },
-
-  dividerText: {
-    padding: "0 12px",
-    fontSize: "12px",
-    color: "#64748b",
-    textTransform: "uppercase",
-    letterSpacing: "0.08em",
-  },
-
-  googleBtn: {
-    width: "100%",
-    padding: "13px",
-    borderRadius: "12px",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
-    background: "rgba(255, 255, 255, 0.04)",
-    color: "#fff",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "12px",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "600",
-  },
-
-  googleIconBg: {
-    width: "22px",
-    height: "22px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#fff",
-    borderRadius: "50%",
-    padding: "2px",
-  },
-
   footer: {
     textAlign: "center",
     marginTop: "24px",
@@ -599,7 +415,8 @@ const styles = {
     color: "#38bdf8",
     textDecoration: "none",
     fontWeight: "600",
+    cursor: "pointer",
   },
 };
 
-export default Login;
+export default ForgotPassword;
