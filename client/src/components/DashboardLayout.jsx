@@ -27,6 +27,7 @@ const styles = {
   },
   innerWrapper: {
     padding: "40px",
+    paddingBottom: "60px",
     maxWidth: "1400px",
     margin: "0 auto",
   },
