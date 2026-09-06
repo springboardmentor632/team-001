@@ -55,8 +55,8 @@ function Dashboard() {
 
         <div style={styles.gridContainer}>
           {[
-            { label: "Total Teams", value: stats.teams, icon: <Users size={20} />, color: "#38bdf8", bg: "rgba(56,189,248,0.12)", trend: "+14% vs last month" },
-            { label: "Total Polls", value: stats.polls, icon: <Vote size={20} />, color: "#c084fc", bg: "rgba(139,92,246,0.12)", trend: "+8 new this week" },
+            { label: "Total Teams", value: stats.teams, icon: <Users size={30} />, color: "#9238f8", bg: "rgba(56,189,248,0.12)", trend: "+14% vs last month" },
+            { label: "Total Polls", value: stats.polls, icon: <Vote size={30} />, color: "#fc84f0", bg: "rgba(139,92,246,0.12)", trend: "+8 new this week" },
             { label: "Total Votes Cast", value: stats.votes, icon: <BarChart3 size={20} />, color: "#34d399", bg: "rgba(16,185,129,0.12)", trend: "+24% engagement rate" },
             { label: "Active Collaborators", value: stats.users, icon: <Activity size={20} />, color: "#fb7185", bg: "rgba(244,63,94,0.12)", trend: "100% verified" },
           ].map((card) => (
