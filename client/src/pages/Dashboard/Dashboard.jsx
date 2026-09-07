@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAllPolls, getTotalVotes, getTotalPolls } from "../../services/pollService";
+import { getDashboardStats } from "../../services/dashboardService";
 import DashboardLayout from "../../components/DashboardLayout";
 import {
   Users, Vote, BarChart3, Activity, TrendingUp, Sparkles,
@@ -8,20 +8,49 @@ import {
 
 function Dashboard() {
   const [user, setUser] = useState({ name: "User" });
-  const [stats, setStats] = useState({ teams: 12, polls: 0, votes: 360, users: 120 });
+  const [stats, setStats] = useState({
+    teams: 0,
+    polls: 0,
+    votes: 0,
+    users: 0,
+  });
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+
     if (storedUser) {
-      try { setUser(JSON.parse(storedUser)); } catch (e) {}
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.log(error);
+      }
     }
-    getTotalVotes()
-      .then((res) => setStats((prev) => ({ ...prev, votes: res.data.totalVotes })))
-      .catch(() => {});
-    getTotalPolls()
-      .then((res) => setStats((prev) => ({ ...prev, polls: res.data.totalPolls })))
-      .catch(() => {});
+
+    fetchDashboard();
+
+    const interval = setInterval(() => {
+      fetchDashboard();
+    }, 5000);
+
+    return () => clearInterval(interval);
+
   }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await getDashboardStats();
+
+      setStats({
+        teams: res.data.totalTeams,
+        polls: res.data.totalPolls,
+        votes: res.data.totalVotes,
+        users: res.data.totalUsers,
+      });
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -47,9 +76,6 @@ function Dashboard() {
               <Search size={16} color="#64748b" />
               <input type="text" placeholder="Search decisions..." style={styles.searchInput} />
             </div>
-            <button style={styles.primaryActionBtn} className="action-btn">
-              <PlusCircle size={18} /> New Decision
-            </button>
           </div>
         </div>
 

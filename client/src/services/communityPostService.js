@@ -1,0 +1,74 @@
+import axios from "axios";
+
+const API =
+  "http://localhost:5000/api/community-posts";
+
+const getToken = () => ({
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`
+  }
+});
+
+export const getPosts = (communityId) =>
+  axios.get(
+    `${API}/${communityId}/posts`,
+    getToken()
+  );
+
+export const createPost = (
+  communityId,
+  formData
+) =>
+  axios.post(
+    `${API}/${communityId}/post`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "multipart/form-data"
+      }
+    }
+  );
+
+export const likePost = (postId) =>
+  axios.put(
+    `${API}/like/${postId}`,
+    {},
+    getToken()
+  );
+
+export const deletePost = (postId) =>
+  axios.delete(
+    `${API}/${postId}`,
+    getToken()
+  );
+
+export const getLeaderboard = (
+  communityId
+) =>
+  axios.get(
+    `${API}/leaderboard/${communityId}`,
+    getToken()
+  );
+
+/* ==========================
+   PIN POST
+========================== */
+export const pinPost = (postId) =>
+  axios.put(
+    `${API}/pin/${postId}`,
+    {},
+    getToken()
+  );
+
+/* ==========================
+   ANNOUNCEMENT
+========================== */
+export const makeAnnouncement = (
+  postId
+) =>
+  axios.put(
+    `${API}/announcement/${postId}`,
+    {},
+    getToken()
+  );

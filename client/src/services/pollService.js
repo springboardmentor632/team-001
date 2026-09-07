@@ -10,4 +10,8 @@ export const removeVote = (voteId) => API.delete(`/polls/vote/${voteId}`);
 export const getPollResults = (id) => API.get(`/polls/${id}/results`);
 export const getTotalVotes = () => API.get("/polls/votes/total");
 export const getTotalPolls = () => API.get("/polls/total");
-export const verifyPollAccess = (id, accessCode) => API.post(`/polls/${id}/verify-access`, { accessCode });
+export const verifyPollAccess = (id, accessCode) =>
+  API.post(`/polls/${id}/verify-access`, { accessCode });
+
+export const hasUserVoted = (pollId, userId) =>
+  API.get(`/polls/${pollId}/user/${userId}/voted`);

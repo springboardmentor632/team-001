@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
 
   role: {
     type: String,
-    enum: ["user", "admin"],
+    enum: ["user", "moderator", "admin"],
     default: "user",
   },
 
@@ -49,7 +49,6 @@ const userSchema = new mongoose.Schema(
     type: Date,
     default: null,
   },
-
   // ======================
   // Google Login
   // ======================

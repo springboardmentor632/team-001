@@ -18,7 +18,14 @@ import Profile from "./pages/Profile/Profile";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import VerifyResetOTP from "./pages/Auth/VerifyResetOTP";
 import ResetPassword from "./pages/Auth/ResetPassword";
-
+import ManageUsers from "./pages/Admin/ManageUsers";
+import CommunityList from "./pages/Communities/CommunityList";
+import CommunityDetails from "./pages/Communities/CommunityDetails";
+import CreateCommunity from "./pages/Communities/CreateCommunity";
+import CommunityHub from "./pages/Communities/CommunityHub";
+import Comments from "./pages/Dashboard/Comments";
+import Reports from "./pages/Profile/Reports";
+import Notifications from "./pages/Notification/Notifications";
 function App() {
   return (
     <BrowserRouter>
@@ -95,6 +102,41 @@ function App() {
           element={<Profile />}
         />
 
+        <Route
+          path="/manage-users"
+          element={<ManageUsers />}
+        />
+        <Route
+          path="/Communities"
+          element={<CommunityList />}
+        />
+
+        <Route
+          path="/Community/:id"
+          element={<CommunityDetails />}
+        />
+
+        <Route
+          path="/Communities/create"
+          element={<CreateCommunity />}
+        />
+        <Route
+          path="/communities/:id/hub"
+          element={<CommunityHub />}
+        />
+        <Route
+          path="/comments"
+          element={<Comments />}
+        />
+
+        <Route
+          path="/reports"
+          element={<Reports />}
+        />
+        <Route
+          path="/notifications"
+          element={<Notifications />}
+        />
       </Routes>
     </BrowserRouter>
   );
