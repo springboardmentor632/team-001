@@ -5,21 +5,63 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("./config/passport");
 
+const http = require("http");
+const { Server } = require("socket.io");
+
 const connectDB = require("./config/db");
 
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const decisionRoutes = require("./routes/decisionRoutes");
 const pollRoutes = require("./routes/pollRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
-
+const communityRoutes = require("./routes/communityRoutes");
+const commentRoutes = require("./routes/commentRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+const communityPostRoutes =
+require("./routes/communityPostRoutes");
+const teamChatRoutes =
+require("./routes/teamChatRoutes");
+const communityCommentRoutes =
+require(
+"./routes/communityCommentRoutes"
+);
 const app = express();
+const server = http.createServer(app);
 
-// Database Connection
+// =========================
+// SOCKET.IO CONFIGURATION
+// =========================
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST"],
+  },
+});
+
+// Make io available globally
+global.io = io;
+
+io.on("connection", (socket) => {
+  console.log("✅ User Connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("❌ User Disconnected:", socket.id);
+  });
+});
+
+// =========================
+// DATABASE CONNECTION
+// =========================
 connectDB();
 
-// Middleware
+// =========================
+// MIDDLEWARE
+// =========================
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -29,8 +71,15 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const path = require("path");
 
-// Session
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
+// =========================
+// SESSION
+// =========================
 app.use(
   session({
     secret: process.env.JWT_SECRET,
@@ -39,23 +88,49 @@ app.use(
   })
 );
 
-// Passport
+// =========================
+// PASSPORT
+// =========================
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
+// =========================
+// ROUTES
+// =========================
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/team", teamRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/teams", teamRoutes);
 app.use("/api/decision", decisionRoutes);
 app.use("/api/polls", pollRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-// Test Route
+app.use("/api/communities", communityRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use(
+  "/api/team-chat",
+  teamChatRoutes
+);
+console.log("Team Routes Loaded");
+app.use("/api/team", teamRoutes);
+app.use(
+ "/api/community-posts",
+ communityPostRoutes
+);
+app.use(
+"/api/community-comments",
+communityCommentRoutes
+);
+// =========================
+// TEST ROUTE
+// =========================
 app.get("/", (req, res) => {
   res.send("🚀 DecisionHub API Running...");
 });
 
-// Error Handler
+// =========================
+// ERROR HANDLER
+// =========================
 app.use((err, req, res, next) => {
   console.error(err.stack);
 
@@ -65,9 +140,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
+// =========================
+// START SERVER
+// =========================
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server Running on Port ${PORT}`);
 });

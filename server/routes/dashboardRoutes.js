@@ -1,4 +1,5 @@
 const express = require("express");
+<<<<<<< HEAD
 
 const {
   getDashboardStats,
@@ -40,4 +41,20 @@ router.get(
   getDecisionTrends
 );
 
+=======
+const router = express.Router();
+
+const { protect } = require("../middleware/authMiddleware");
+
+const {
+  getDashboardStats,
+} = require("../controllers/dashboardController");
+
+router.get(
+  "/stats",
+  protect,
+  getDashboardStats
+);
+
+>>>>>>> origin/develop
 module.exports = router;

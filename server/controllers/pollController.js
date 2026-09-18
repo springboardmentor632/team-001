@@ -1,30 +1,49 @@
 const Poll = require("../models/Poll");
 const Vote = require("../models/Vote");
-
+const Notification = require("../models/Notification");
+const User = require("../models/User");
 // CREATE POLL
 const createPoll = async (req, res) => {
-    try {
-        const { visibility, accessCode } = req.body;
+  try {
 
-        if (visibility === "private" && !accessCode) {
-            return res.status(400).json({
-                message: "Access code is required for private polls"
-            });
-        }
+    console.log("REQ USER:", req.user);
 
-        const poll = new Poll(req.body);
-        const savedPoll = await poll.save();
+    const poll = new Poll({
+      ...req.body,
+      createdBy: req.user._id
+    });
 
-        res.status(201).json({
-            message: "Poll created successfully",
-            poll: savedPoll
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: "Error creating poll",
-            error: error.message
+    console.log("POLL BEFORE SAVE:", poll);
+
+    const savedPoll = await poll.save();
+    // Notify all admins
+    const users = await User.find({});
+    for (const user of users) {
+    // Skip creator if you don't want them to receive their own notification
+    if (user._id.toString() !== req.user._id.toString()) {
+        await Notification.create({
+        user: user._id,
+        title: "New Poll Created",
+        message: `${req.user.name} created a new poll: "${savedPoll.question}"`,
+        type: "poll"
         });
     }
+    }
+    console.log("POLL SAVED:", savedPoll);
+
+    res.status(201).json({
+      message: "Poll created successfully",
+      poll: savedPoll
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Error creating poll",
+      error: error.message
+    });
+  }
 };
 
 
@@ -83,7 +102,24 @@ const getPollById = async (req, res) => {
 // UPDATE POLL
 const updatePoll = async (req, res) => {
     try {
-        const poll = await Poll.findByIdAndUpdate(
+        const poll = await Poll.findById(req.params.id);
+
+        if (!poll) {
+            return res.status(404).json({
+                message: "Poll not found"
+            });
+        }
+
+        if (
+            req.user.role !== "admin" &&
+            poll.createdBy.toString() !== req.user._id.toString()
+        ) {
+            return res.status(403).json({
+                message: "You are not authorized to update this poll"
+            });
+        }
+
+        const updatedPoll = await Poll.findByIdAndUpdate(
             req.params.id,
             req.body,
             {
@@ -92,16 +128,11 @@ const updatePoll = async (req, res) => {
             }
         );
 
-        if (!poll) {
-            return res.status(404).json({
-                message: "Poll not found"
-            });
-        }
-
         res.status(200).json({
             message: "Poll updated successfully",
-            poll
+            poll: updatedPoll
         });
+
     } catch (error) {
         res.status(500).json({
             message: "Error updating poll",
@@ -109,52 +140,61 @@ const updatePoll = async (req, res) => {
         });
     }
 };
-
-// DELETE POLL
+//DeletePoll
 const deletePoll = async (req, res) => {
-    try {
-        const poll = await Poll.findByIdAndDelete(req.params.id);
+  try {
+    const poll = await Poll.findById(req.params.id);
 
-        if (!poll) {
-            return res.status(404).json({
-                message: "Poll not found"
-            });
-        }
-
-        // Delete votes associated with this poll
-        await Vote.deleteMany({
-            poll: req.params.id
-        });
-
-        res.status(200).json({
-            message: "Poll deleted successfully"
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: "Error deleting poll",
-            error: error.message
-        });
+    if (!poll) {
+      return res.status(404).json({
+        message: "Poll not found"
+      });
     }
-};
 
+    // Admin OR Poll Creator
+    if (
+      req.user.role !== "admin" &&
+      poll.createdBy.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this poll"
+      });
+    }
+
+    await Poll.findByIdAndDelete(req.params.id);
+
+    await Vote.deleteMany({
+      poll: req.params.id
+    });
+
+    res.status(200).json({
+      message: "Poll deleted successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Error deleting poll",
+      error: error.message
+    });
+  }
+};
 // CAST VOTE
 const castVote = async (req, res) => {
     try {
         const {
             pollId,
-            user,
             selectedOptions,
             rating
         } = req.body;
 
-        // 1. Check poll ID
+        const user = req.user._id;
+
         if (!pollId) {
             return res.status(400).json({
                 message: "Poll ID is required"
             });
         }
 
-        // 2. Find poll
         const poll = await Poll.findById(pollId);
 
         if (!poll) {
@@ -163,14 +203,12 @@ const castVote = async (req, res) => {
             });
         }
 
-        // 3. Check active poll
         if (!poll.isActive) {
             return res.status(400).json({
                 message: "Poll is not active"
             });
         }
 
-        // 4. Check poll dates
         const currentDate = new Date();
 
         if (poll.startDate && currentDate < poll.startDate) {
@@ -185,9 +223,24 @@ const castVote = async (req, res) => {
             });
         }
 
-        // 5. Validate SINGLE choice
-        if (poll.pollType === "single") {
+        // ===================================
+        // PREVENT DUPLICATE VOTING
+        // ===================================
+        if (user && !poll.anonymous) {
+            const existingVote = await Vote.findOne({
+                poll: pollId,
+                user
+            });
 
+            if (existingVote) {
+                return res.status(400).json({
+                    message: "You have already voted in this poll"
+                });
+            }
+        }
+
+        // SINGLE CHOICE
+        if (poll.pollType === "single") {
             if (!selectedOptions || selectedOptions.length !== 1) {
                 return res.status(400).json({
                     message: "Single choice poll requires exactly one option"
@@ -195,9 +248,8 @@ const castVote = async (req, res) => {
             }
         }
 
-        // 6. Validate MULTIPLE choice
+        // MULTIPLE CHOICE
         if (poll.pollType === "multiple") {
-
             if (!selectedOptions || selectedOptions.length < 1) {
                 return res.status(400).json({
                     message: "Select at least one option"
@@ -205,10 +257,8 @@ const castVote = async (req, res) => {
             }
         }
 
-
-        // 7. Validate RATING poll
+        // RATING POLL
         if (poll.pollType === "rating") {
-
             if (rating === undefined || rating === null) {
                 return res.status(400).json({
                     message: "Rating is required"
@@ -222,7 +272,7 @@ const castVote = async (req, res) => {
             }
         }
 
-        // 8. Validate selected options
+        // VALIDATE OPTIONS
         if (
             poll.pollType === "single" ||
             poll.pollType === "multiple"
@@ -233,7 +283,6 @@ const castVote = async (req, res) => {
             );
 
             for (const selectedOption of selectedOptions) {
-
                 if (!pollOptionIds.includes(selectedOption.toString())) {
                     return res.status(400).json({
                         message: "Selected option does not belong to this poll"
@@ -242,11 +291,9 @@ const castVote = async (req, res) => {
             }
         }
 
-
-        // 9. Create vote
         const vote = new Vote({
             poll: pollId,
-            user: poll.anonymous ? undefined : (user || undefined),
+            user: poll.anonymous ? null : user,
             selectedOptions:
                 poll.pollType === "rating"
                     ? []
@@ -257,18 +304,27 @@ const castVote = async (req, res) => {
                     : undefined
         });
 
-        // 10. Save vote
         const savedVote = await vote.save();
-
-        // 11. Send response
+        // Notify Poll Owner
+        if (
+        poll.createdBy &&
+        poll.createdBy.toString() !==
+        req.user._id.toString()
+        ) {
+        await Notification.create({
+            user: poll.createdBy,
+            title: "New Vote",
+            message: `${req.user.name} voted on your poll`,
+            type: "vote"
+        });
+        }
         res.status(201).json({
             message: "Vote submitted successfully",
             vote: savedVote
         });
 
     } catch (error) {
-
-        console.error("Vote error:", error);
+        console.error(error);
 
         res.status(500).json({
             message: "Error submitting vote",
@@ -276,8 +332,6 @@ const castVote = async (req, res) => {
         });
     }
 };
-
-
 // =========================
 // GET POLL RESULTS
 // =========================
@@ -378,11 +432,35 @@ const getPollResults = async (req, res) => {
 // REMOVE VOTE
 const removeVote = async (req, res) => {
     try {
-        const vote = await Vote.findByIdAndDelete(req.params.voteId);
-        if (!vote) return res.status(404).json({ message: "Vote not found" });
-        res.status(200).json({ message: "Vote removed successfully" });
+        const vote = await Vote.findById(req.params.voteId);
+
+        if (!vote) {
+            return res.status(404).json({
+                message: "Vote not found"
+            });
+        }
+
+        if (
+            vote.user &&
+            vote.user.toString() !== req.user._id.toString() &&
+            req.user.role !== "admin"
+        ) {
+            return res.status(403).json({
+                message: "Not authorized"
+            });
+        }
+
+        await Vote.findByIdAndDelete(req.params.voteId);
+
+        res.status(200).json({
+            message: "Vote removed successfully"
+        });
+
     } catch (error) {
-        res.status(500).json({ message: "Error removing vote", error: error.message });
+        res.status(500).json({
+            message: "Error removing vote",
+            error: error.message
+        });
     }
 };
 
@@ -405,7 +483,26 @@ const getTotalPolls = async (req, res) => {
         res.status(500).json({ message: "Error fetching total polls", error: error.message });
     }
 };
+const hasUserVoted = async (req, res) => {
+  try {
+    const { pollId, userId } = req.params;
 
+    const vote = await Vote.findOne({
+      poll: pollId,
+      user: userId
+    });
+
+    res.status(200).json({
+      voted: !!vote,
+      voteId: vote?._id || null
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error checking vote",
+      error: error.message
+    });
+  }
+};
 // EXPORT FUNCTIONS
 module.exports = {
     createPoll,
@@ -418,5 +515,6 @@ module.exports = {
     getTotalVotes,
     getTotalPolls,
     verifyPollAccess,
-    removeVote
+    removeVote,
+    hasUserVoted
 };
