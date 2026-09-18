@@ -12,6 +12,7 @@ const userRoutes = require("./routes/userRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const decisionRoutes = require("./routes/decisionRoutes");
 const pollRoutes = require("./routes/pollRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/decision", decisionRoutes);
 app.use("/api/polls", pollRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 // Test Route
 app.get("/", (req, res) => {
   res.send("🚀 DecisionHub API Running...");
