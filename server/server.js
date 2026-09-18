@@ -11,7 +11,6 @@ const { Server } = require("socket.io");
 const connectDB = require("./config/db");
 
 const dashboardRoutes = require("./routes/dashboardRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");

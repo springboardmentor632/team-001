@@ -8,3 +8,5 @@ server/node_modules/
 .env
 .env.*
 *.env
+# Build output
+client/dist/
