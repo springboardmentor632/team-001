@@ -30,7 +30,8 @@ require(
 );
 const app = express();
 const server = http.createServer(app);
-
+const optionComparisonRoutes =
+require("./routes/optionComparisonRoutes");
 // =========================
 // SOCKET.IO CONFIGURATION
 // =========================
@@ -119,6 +120,10 @@ app.use(
 app.use(
 "/api/community-comments",
 communityCommentRoutes
+);
+app.use(
+ "/api/option-comparison",
+ optionComparisonRoutes
 );
 // =========================
 // TEST ROUTE

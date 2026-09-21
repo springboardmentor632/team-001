@@ -26,6 +26,8 @@ import CommunityHub from "./pages/Communities/CommunityHub";
 import Comments from "./pages/Dashboard/Comments";
 import Reports from "./pages/Profile/Reports";
 import Notifications from "./pages/Notification/Notifications";
+import OptionComparison from
+"./pages/Decision/OptionComparison";
 function App() {
   return (
     <BrowserRouter>
@@ -136,6 +138,10 @@ function App() {
         <Route
           path="/notifications"
           element={<Notifications />}
+        />
+        <Route
+          path="/option-comparison"
+          element={<OptionComparison />}
         />
       </Routes>
     </BrowserRouter>

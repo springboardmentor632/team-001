@@ -1,15 +1,16 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Workflow, 
-  Vote, 
-  BarChart3, 
-  User, 
-  Plus, 
-  Globe2, 
-  Sparkles 
+import {
+  LayoutDashboard,
+  Users,
+  Workflow,
+  Vote,
+  BarChart3,
+  User,
+  Plus,
+  Globe2,
+  Sparkles,
+  GitCompare
 } from "lucide-react";
 
 function Sidebar() {
@@ -18,16 +19,59 @@ function Sidebar() {
   const role = user?.role;
 
   const menuItems = [
-    { title: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/dashboard" },
-    { title: "Teams", icon: <Users size={18} />, path: "/teams" },
-    { title: "Communities", icon: <Globe2 size={18} />, path: "/communities" },
+    {
+      title: "Dashboard",
+      icon: <LayoutDashboard size={18} />,
+      path: "/dashboard"
+    },
+    {
+      title: "Teams",
+      icon: <Users size={18} />,
+      path: "/teams"
+    },
+    {
+      title: "Communities",
+      icon: <Globe2 size={18} />,
+      path: "/communities"
+    },
+
     ...(role === "admin" || role === "moderator"
-      ? [{ title: "Create Community", icon: <Plus size={18} />, path: "/communities/create" }]
+      ? [{
+          title: "Create Community",
+          icon: <Plus size={18} />,
+          path: "/communities/create"
+        }]
       : []),
-    { title: "Decisions", icon: <Workflow size={18} />, path: "/decisions" },
-    { title: "Votes", icon: <Vote size={18} />, path: "/votes" },
-    { title: "Analytics", icon: <BarChart3 size={18} />, path: "/analytics" },
-    { title: "Profile", icon: <User size={18} />, path: "/profile" },
+
+    {
+      title: "Decisions",
+      icon: <Workflow size={18} />,
+      path: "/decisions"
+    },
+
+    {
+      title: "Option Compare",
+      icon: <GitCompare size={18} />,
+      path: "/option-comparison"
+    },
+
+    {
+      title: "Votes",
+      icon: <Vote size={18} />,
+      path: "/votes"
+    },
+
+    {
+      title: "Analytics",
+      icon: <BarChart3 size={18} />,
+      path: "/analytics"
+    },
+
+    {
+      title: "Profile",
+      icon: <User size={18} />,
+      path: "/profile"
+    }
   ];
 
   return (

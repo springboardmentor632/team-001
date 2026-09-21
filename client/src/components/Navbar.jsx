@@ -12,7 +12,8 @@ import {
   Shield,
   Bell,
   Globe,
-  Building2
+  Building2,
+  GitCompare
 } from "lucide-react";
 import { getNotifications } from "../services/notificationService";
 
@@ -61,7 +62,11 @@ function Navbar() {
       icon: <Bell size={18} />,
       badge: count
     },
-
+    {
+      path: "/option-comparison",
+      label: "Option Compare",
+      icon: <GitCompare size={18} />
+    },
     // All roles can create polls
     ...(role === "user" ||
     role === "moderator" ||
