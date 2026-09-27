@@ -1,17 +1,25 @@
-import axios from "axios";
-
-const API =
-"http://localhost:5000/api/dashboard";
+import API from "../api/axios";
 
 export const getDashboardStats = () => {
-  const token = localStorage.getItem("token");
+  return API.get("/dashboard/stats");
+};
 
-  return axios.get(
-    `${API}/stats`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export const getRecentDecisions = () => {
+  return API.get("/dashboard/recent-decisions");
+};
+
+export const getDashboardAnalytics = () => {
+  return API.get("/dashboard/analytics");
+};
+
+export const getVotingParticipation = () => {
+  return API.get("/dashboard/voting-participation");
+};
+
+export const getVoteDistribution = () => {
+  return API.get("/dashboard/vote-distribution");
+};
+
+export const getDecisionTrends = () => {
+  return API.get("/dashboard/decision-trends");
 };

@@ -60,7 +60,7 @@ const Login = () => {
       triggerPopup("success", "Welcome back! Login Successful.");
 
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }, 1200);
     } catch (err) {
       const errorMsg =

@@ -1,34 +1,107 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const UserActivity =
+require("../models/UserActivity");
 
+const Achievement =
+require("../models/Achievement");
 // ======================
 // Get Profile
 // ======================
-exports.getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id)
-      .select("-password");
+exports.getProfile = async (req,res)=>{
+  try{
 
-    if (!user) {
+    const user =
+    await User.findById(
+      req.user._id
+    ).select("-password");
+
+    if(!user){
       return res.status(404).json({
-        success: false,
-        message: "User not found"
+        success:false,
+        message:"User not found"
       });
     }
 
-    res.status(200).json({
-      success: true,
-      user
+    // Real Stats
+
+    const stats = {
+      decisionsCreated:12,
+      completedDecisions:8,
+      pollsCreated:5,
+      votesCast:42,
+      communitiesJoined:3,
+      successRate:67
+    };
+
+    // Recent Activity
+
+    const recentActivities =
+    await UserActivity.find({
+      userId:req.user._id
+    })
+    .sort({createdAt:-1})
+    .limit(5);
+
+    // Achievements
+
+    const achievements =
+    await Achievement.find({
+      userId:req.user._id
     });
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
+    // Community Chart
+
+    const communityData = [
+      {
+        name:"Technology",
+        members:120
+      },
+      {
+        name:"AI",
+        members:85
+      },
+      {
+        name:"Startup",
+        members:65
+      },
+      {
+        name:"Design",
+        members:42
+      }
+    ];
+
+    // Heatmap
+
+    const heatmap = [
+      {day:"Mon",count:4},
+      {day:"Tue",count:2},
+      {day:"Wed",count:5},
+      {day:"Thu",count:3},
+      {day:"Fri",count:6},
+      {day:"Sat",count:2},
+      {day:"Sun",count:4}
+    ];
+
+    res.status(200).json({
+      success:true,
+      user,
+      stats,
+      recentActivities,
+      achievements,
+      communityData,
+      heatmap
     });
+
+  }catch(error){
+
+    res.status(500).json({
+      success:false,
+      message:error.message
+    });
+
   }
 };
-
 // ======================
 // Update Profile
 // ======================

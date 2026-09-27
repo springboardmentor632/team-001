@@ -12,9 +12,9 @@ import PollDetails from "./pages/Polls/PollDetails";
 import TeamList from "./pages/Teams/TeamList";
 import CreateTeam from "./pages/Teams/CreateTeam";
 import TeamDetails from "./pages/Teams/TeamDetails";
-
+import PublicRoute from "./components/PublicRoute";
 import Profile from "./pages/Profile/Profile";
-
+import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import VerifyResetOTP from "./pages/Auth/VerifyResetOTP";
 import ResetPassword from "./pages/Auth/ResetPassword";
@@ -26,84 +26,108 @@ import CommunityHub from "./pages/Communities/CommunityHub";
 import Comments from "./pages/Dashboard/Comments";
 import Reports from "./pages/Profile/Reports";
 import Notifications from "./pages/Notification/Notifications";
-import OptionComparison from
-"./pages/Decision/OptionComparison";
+import OptionComparison from "./pages/Decision/OptionComparison";
+import Feedback from "./pages/Feedback/Feedback";
+import AdminFeedbacks from "./pages/Feedback/AdminFeedbacks";
+import Analytics from "./pages/Analytics/analytics";
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* Public Routes */}
-
-        <Route path="/" element={<LandingPage />} />
-
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/register" element={<Register />} />
-
+        {/* Public / Auth Routes (Protected against access when logged in) */}
+        <Route 
+          path="/" 
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          } 
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
         <Route
           path="/forgot-password"
-          element={<ForgotPassword />}
+          element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          }
         />
-
         <Route
           path="/verify-reset-otp"
-          element={<VerifyResetOTP />}
+          element={
+            <PublicRoute>
+              <VerifyResetOTP />
+            </PublicRoute>
+          }
         />
-
         <Route
           path="/reset-password"
-          element={<ResetPassword />}
+          element={
+            <PublicRoute>
+              <ResetPassword />
+            </PublicRoute>
+          }
         />
 
         {/* Dashboard */}
-
         <Route
           path="/dashboard"
-          element={<Dashboard />}
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
         />
 
         {/* Polls */}
-
         <Route
           path="/polls"
           element={<PollList />}
         />
-
         <Route
           path="/polls/create"
           element={<CreatePoll />}
         />
-
         <Route
           path="/polls/:id"
           element={<PollDetails />}
         />
 
         {/* Teams */}
-
         <Route
           path="/teams"
           element={<TeamList />}
         />
-
         <Route
           path="/teams/create"
           element={<CreateTeam />}
         />
-
         <Route
           path="/teams/:id"
           element={<TeamDetails />}
         />
 
         {/* Profile */}
-
         <Route
           path="/profile"
           element={<Profile />}
         />
-
         <Route
           path="/manage-users"
           element={<ManageUsers />}
@@ -112,12 +136,10 @@ function App() {
           path="/Communities"
           element={<CommunityList />}
         />
-
         <Route
           path="/Community/:id"
           element={<CommunityDetails />}
         />
-
         <Route
           path="/Communities/create"
           element={<CreateCommunity />}
@@ -130,7 +152,6 @@ function App() {
           path="/comments"
           element={<Comments />}
         />
-
         <Route
           path="/reports"
           element={<Reports />}
@@ -142,6 +163,18 @@ function App() {
         <Route
           path="/option-comparison"
           element={<OptionComparison />}
+        />
+        <Route
+          path="/feedback"
+          element={<Feedback />}
+        />
+        <Route
+          path="/admin-feedbacks"
+          element={<AdminFeedbacks />}
+        />
+        <Route
+          path="/analytics"
+          element={<Analytics />}
         />
       </Routes>
     </BrowserRouter>

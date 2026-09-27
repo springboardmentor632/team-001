@@ -13,7 +13,8 @@ import {
   Bell,
   Globe,
   Building2,
-  GitCompare
+  GitCompare,
+  MessageSquare
 } from "lucide-react";
 import { getNotifications } from "../services/notificationService";
 
@@ -125,6 +126,22 @@ function Navbar() {
       label: "Profile",
       icon: <User size={18} />
     },
+
+    ...(role === "admin"
+    ? [
+        {
+          path: "/admin-feedbacks",
+          label: "User Feedbacks",
+          icon: <MessageSquare size={18} />
+        }
+      ]
+    : [
+        {
+          path: "/feedback",
+          label: "Feedback",
+          icon: <MessageSquare size={18} />
+        }
+      ]),
 
     // Admin only
     ...(role === "admin"

@@ -32,6 +32,12 @@ const app = express();
 const server = http.createServer(app);
 const optionComparisonRoutes =
 require("./routes/optionComparisonRoutes");
+const feedbackRoutes =
+require("./routes/feedbackRoutes");
+const analyticsRoutes = require(
+  "./routes/analyticsRoutes"
+);
+
 // =========================
 // SOCKET.IO CONFIGURATION
 // =========================
@@ -124,6 +130,18 @@ communityCommentRoutes
 app.use(
  "/api/option-comparison",
  optionComparisonRoutes
+);
+app.use(
+"/api/feedback",
+feedbackRoutes
+);
+app.use(
+  "/api/analytics",
+  analyticsRoutes
+);
+app.use(
+  "/api/profile-analytics",
+  require("./routes/profileAnalytics")
 );
 // =========================
 // TEST ROUTE
