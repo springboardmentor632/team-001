@@ -9,12 +9,13 @@ import {
   deletePost,
   getLeaderboard,
   pinPost,
-  makeAnnouncement
+  makeAnnouncement,
+  editPost
 } from "../../services/communityPostService";
 import { 
   Users, Image, FileText, Heart, Send, Search, Trash2, LogOut, 
   Pin, Megaphone, Calendar, Sparkles, Terminal, CheckCheck, Maximize2, X, 
-  Paperclip, Smile, Globe2, TrendingUp, BarChart2
+  Paperclip, Smile, Globe2, TrendingUp, BarChart2, MoreVertical, Edit2, EyeOff, Check, X as XIcon
 } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 
@@ -34,6 +35,12 @@ const CommunityHub = () => {
   const [expandedImage, setExpandedImage] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const messagesEndRef = useRef(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editContent, setEditContent] = useState("");
+  const [hiddenForMe, setHiddenForMe] = useState(
+    JSON.parse(localStorage.getItem("hiddenPosts") || "[]")
+  );
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -111,6 +118,36 @@ const CommunityHub = () => {
     }
   };
 
+  const handleEditStart = (post) => {
+    setEditingId(post._id);
+    setEditContent(post.content);
+    setOpenMenuId(null);
+  };
+
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditContent("");
+  };
+
+  const handleEditSave = async (postId) => {
+    if (!editContent.trim()) return;
+    try {
+      await editPost(postId, editContent);
+      setEditingId(null);
+      setEditContent("");
+      loadData();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleDeleteForMe = (postId) => {
+    const updated = [...hiddenForMe, postId];
+    setHiddenForMe(updated);
+    localStorage.setItem("hiddenPosts", JSON.stringify(updated));
+    setOpenMenuId(null);
+  };
+
   const handleAnnouncement = async (postId) => {
     try {
       await makeAnnouncement(postId);
@@ -141,7 +178,8 @@ const CommunityHub = () => {
   };
 
   const filteredPosts = posts.filter((post) =>
-    post.content?.toLowerCase().includes(search.toLowerCase())
+    post.content?.toLowerCase().includes(search.toLowerCase()) &&
+    !hiddenForMe.includes(post._id)
   );
 
   const filteredSidebarComms = communitiesList.filter((c) =>
@@ -268,6 +306,10 @@ const CommunityHub = () => {
               ) : (
                 filteredPosts.map((post) => {
                   const isMe = user && post.userId?._id === user._id;
+                  const isAdmin = user?.role === "admin";
+                  const isMod = user?.role === "moderator";
+                  const isEditing = editingId === post._id;
+                  const isMenuOpen = openMenuId === post._id;
 
                   return (
                     <div
@@ -289,15 +331,71 @@ const CommunityHub = () => {
                           border: isMe ? "none" : "1px solid rgba(59, 130, 246, 0.2)"
                         }}
                       >
-                        {/* Author Header */}
-                        {!isMe && (
-                          <span style={styles.bubbleAuthor}>
-                            {post.userId?.name || "Community Member"}
-                          </span>
-                        )}
+                        {/* Author Header + Menu Button */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          {!isMe && (
+                            <span style={styles.bubbleAuthor}>
+                              {post.userId?.name || "Community Member"}
+                            </span>
+                          )}
+                          <div style={{ position: "relative", marginLeft: "auto" }}>
+                            <button
+                              onClick={() => setOpenMenuId(isMenuOpen ? null : post._id)}
+                              style={styles.menuTriggerBtn}
+                            >
+                              <MoreVertical size={14} color="#9CA3AF" />
+                            </button>
 
-                        {/* Text Content */}
-                        <p style={styles.bubbleText}>{post.content}</p>
+                            {isMenuOpen && (
+                              <div style={styles.dropdownMenu}>
+                                {isMe && (
+                                  <button onClick={() => handleEditStart(post)} style={styles.dropdownItem}>
+                                    <Edit2 size={13} /> Edit
+                                  </button>
+                                )}
+                                {(isMe || isAdmin) && (
+                                  <button onClick={() => { handleDelete(post._id); setOpenMenuId(null); }} style={styles.dropdownItem}>
+                                    <Trash2 size={13} /> Delete
+                                  </button>
+                                )}
+                                <button onClick={() => handleDeleteForMe(post._id)} style={styles.dropdownItem}>
+                                  <EyeOff size={13} /> Delete for me
+                                </button>
+                                {(isAdmin || isMod) && (
+                                  <button onClick={() => { handlePin(post._id); setOpenMenuId(null); }} style={styles.dropdownItem}>
+                                    <Pin size={13} /> {post.isPinned ? "Unpin" : "Pin"}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Text Content — Editable or Static */}
+                        {isEditing ? (
+                          <div style={{ marginTop: "6px" }}>
+                            <textarea
+                              value={editContent}
+                              onChange={(e) => setEditContent(e.target.value)}
+                              style={styles.editTextarea}
+                              rows="2"
+                              autoFocus
+                            />
+                            <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}>
+                              <button onClick={() => handleEditSave(post._id)} style={styles.editSaveBtn}>
+                                <Check size={13} /> Save
+                              </button>
+                              <button onClick={handleEditCancel} style={styles.editCancelBtn}>
+                                <XIcon size={13} /> Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p style={styles.bubbleText}>
+                            {post.content}
+                            {post.isEdited && <span style={styles.editedTag}> (edited)</span>}
+                          </p>
+                        )}
 
                         {/* Image Attachment */}
                         {post.image && (
@@ -318,26 +416,14 @@ const CommunityHub = () => {
 
                         {/* File Attachment */}
                         {post.file && (
-                          <a
-                            href={`http://localhost:5000${post.file}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={styles.bubbleFileLink}
-                          >
-                            📄 Download Attachment
+                        <a
+                        href={`http://localhost:5000${post.file}`}
+    target="_blank"
+    rel="noopener noreferrer"
+                        style={styles.bubbleFileLink}
+                        >
+                       📄 Download Attachment
                           </a>
-                        )}
-
-                        {/* Admin / Mod Controls inside Bubble */}
-                        {(user?.role === "admin" || user?.role === "moderator") && (
-                          <div style={styles.bubbleModRow}>
-                            <button onClick={() => handlePin(post._id)} style={styles.miniModBtn}>
-                              📌 {post.isPinned ? "Pinned" : "Pin"}
-                            </button>
-                            <button onClick={() => handleAnnouncement(post._id)} style={styles.miniModBtn}>
-                              📢 {post.isAnnouncement ? "Announced" : "Broadcast"}
-                            </button>
-                          </div>
                         )}
 
                         {/* Bubble Footer: Timestamp & Reactions */}
@@ -358,12 +444,6 @@ const CommunityHub = () => {
                             {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                           {isMe && <CheckCheck size={14} color="#93C5FD" style={{ marginLeft: "2px" }} />}
-
-                          {(isMe || user?.role === "admin") && (
-                            <button onClick={() => handleDelete(post._id)} style={styles.bubbleDeleteBtn} title="Delete message">
-                              <Trash2 size={12} color="#EF4444" />
-                            </button>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -985,6 +1065,84 @@ const styles = {
     borderRadius: "12px",
     boxShadow: "0 25px 50px rgba(0,0,0,0.8)",
     border: "1px solid rgba(59, 130, 246, 0.3)",
+  },
+  menuTriggerBtn: {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    padding: "2px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: "20px",
+    right: "0",
+    background: "#1F2937",
+    border: "1px solid rgba(59, 130, 246, 0.3)",
+    borderRadius: "10px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+    zIndex: 50,
+    minWidth: "150px",
+    overflow: "hidden",
+  },
+  dropdownItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    width: "100%",
+    background: "transparent",
+    border: "none",
+    color: "#F9FAFB",
+    padding: "9px 12px",
+    fontSize: "12.5px",
+    fontWeight: "600",
+    cursor: "pointer",
+    textAlign: "left",
+  },
+  editTextarea: {
+    width: "100%",
+    background: "#0B1120",
+    border: "1px solid rgba(59, 130, 246, 0.3)",
+    borderRadius: "8px",
+    padding: "8px 10px",
+    color: "#F9FAFB",
+    fontSize: "13.5px",
+    outline: "none",
+    resize: "none",
+    boxSizing: "border-box",
+  },
+  editSaveBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    background: "rgba(34, 197, 94, 0.15)",
+    border: "1px solid rgba(34, 197, 94, 0.3)",
+    color: "#4ADE80",
+    padding: "5px 10px",
+    borderRadius: "6px",
+    fontSize: "11.5px",
+    fontWeight: "700",
+    cursor: "pointer",
+  },
+  editCancelBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    background: "rgba(239, 68, 68, 0.1)",
+    border: "1px solid rgba(239, 68, 68, 0.25)",
+    color: "#F87171",
+    padding: "5px 10px",
+    borderRadius: "6px",
+    fontSize: "11.5px",
+    fontWeight: "700",
+    cursor: "pointer",
+  },
+  editedTag: {
+    fontSize: "10.5px",
+    color: "#9CA3AF",
+    fontStyle: "italic",
   },
 };
 

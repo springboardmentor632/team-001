@@ -362,3 +362,65 @@ exports.makeAnnouncement = async (
 
   }
 };
+/*
+=========================================
+EDIT POST
+=========================================
+*/
+exports.editPost = async (req, res) => {
+  try {
+
+    const post = await CommunityPost.findById(
+      req.params.postId
+    );
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found"
+      });
+    }
+
+    const isOwner =
+      post.userId.toString() ===
+      req.user._id.toString();
+
+    if (!isOwner) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Not authorized to edit this post"
+      });
+    }
+
+    if (!req.body.content || !req.body.content.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Content cannot be empty"
+      });
+    }
+
+    post.content = req.body.content;
+    post.isEdited = true;
+
+    await post.save();
+
+    const populatedPost =
+      await CommunityPost.findById(post._id)
+        .populate("userId", "name email");
+
+    res.status(200).json({
+      success: true,
+      message: "Post updated successfully",
+      post: populatedPost
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+};

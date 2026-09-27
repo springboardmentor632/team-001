@@ -9,7 +9,8 @@ const {
   createPost,
   getPosts,
   likePost,
-  deletePost
+  deletePost,
+  editPost
 } = require("../controllers/communityPostController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -61,5 +62,10 @@ router.put(
   "/announcement/:postId",
   protect,
   makeAnnouncement
+);
+router.put(
+  "/edit/:postId",
+  protect,
+  editPost
 );
 module.exports = router;

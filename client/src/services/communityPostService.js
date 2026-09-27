@@ -72,3 +72,13 @@ export const makeAnnouncement = (
     {},
     getToken()
   );
+
+/* ==========================
+   EDIT POST
+========================== */
+export const editPost = (postId, content) =>
+  axios.put(
+    `${API}/edit/${postId}`,
+    { content },
+    getToken()
+  );
